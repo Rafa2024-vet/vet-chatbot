@@ -1,0 +1,65 @@
+# Define a variável 'host' para ser usada em todas as requisições abaixo.
+@host = http://localhost:5000/api
+
+### =======================================
+### Teste 1: Criar um novo usuário
+### =======================================
+POST {{host}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Carlos Tutor",
+  "email": "carlos.tutor@email.com",
+  "password": "senhaSuperSegura123"
+}
+
+### =======================================
+### Teste 2: Fazer Login para obter o token
+### @name loginRequest
+### =======================================
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "carlos.tutor@email.com",
+  "password": "senhaSuperSegura123"
+}
+
+### =======================================
+# A variável @token abaixo não será usada no Teste 3 desta vez.
+@token = {{loginRequest.response.body.token}}
+
+### =======================================
+### Teste 3: Criar um Pet (COM TOKEN MANUAL)
+### @name createPetRequest
+### =======================================
+POST {{host}}/pets
+Content-Type: application/json
+# A linha abaixo foi alterada para usar o token que você copiou do Teste 2.
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtY3dvNGFocTAwMDBwczEwMGc5bXFkZnciLCJpYXQiOjE3NTIxMDk1NDMsImV4cCI6MTc1NDcwMTU0M30.Sqqn8bi-X6LYsdalG5DXVzgO-zV6pu01Vcm3r0AmK64
+
+{
+  "name": "Rex",
+  "species": "DOG",
+  "breed": "Golden Retriever",
+  "birthDate": "2025-01-15T00:00:00.000Z"
+}
+
+### =======================================
+# Captura o ID do pet da resposta da criação.
+@petId = {{createPetRequest.response.body.id}}
+
+### =======================================
+### Teste 4: Enviar uma mensagem para o Chat (Rota protegida)
+### =======================================
+POST {{host}}/chat
+Content-Type: application/json
+# O Teste 4 ainda usa a variável {{token}}, então ele falhará.
+# Nosso foco é apenas no resultado do Teste 3 por enquanto.
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtY3dvNGFocTAwMDBwczEwMGc5bXFkZnciLCJpYXQiOjE3NTIxMDk1NDMsImV4cCI6MTc1NDcwMTU0M30.Sqqn8bi-X6LYsdalG5DXVzgO-zV6pu01Vcm3r0AmK64
+
+
+{
+  "petId": "cmcwou5j30003pj105tdandfl",
+  "message": "Olá, meu cachorro está tossindo bastante hoje, o que pode ser?"
+}

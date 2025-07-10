@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  createdAt DateTime @default(now())
+  pets      Pet[]
+}
+
+model Pet {
+  id        String      @id @default(cuid())
+  name      String
+  species   Species
+  breed     String?
+  birthDate DateTime
+  owner     User        @relation(fields: [ownerId], references: [id])
+  ownerId   String
+  events    HealthEvent[]
+}
+
+model HealthEvent {
+  id             String      @id @default(cuid())
+  pet            Pet         @relation(fields: [petId], references: [id])
+  petId          String
+  status         EventStatus @default(OPEN)
+  differentialDx String?     @db.Text
+  finalDx        String?     @db.Text
+  treatmentPlan  String?     @db.Text
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  messages       Message[]
+  exams          Exam[]
+}
+
+model Message {
+  id        String      @id @default(cuid())
+  event     HealthEvent @relation(fields: [eventId], references: [id])
+  eventId   String
+  content   String      @db.Text
+  sender    SenderType
+  createdAt DateTime    @default(now())
+}
+
+model Exam {
+  id        String      @id @default(cuid())
+  event     HealthEvent @relation(fields: [eventId], references: [id])
+  eventId   String
+  examType  String
+  results   Json?
+  analysis  String?     @db.Text
+  createdAt DateTime    @default(now())
+}
+
+enum Species {
+  DOG
+  CAT
+}
+
+enum EventStatus {
+  OPEN
+  AWAITING_EXAMS
+  DIAGNOSED
+  CLOSED
+}
+
+enum SenderType {
+  USER
+  CLINICO_GERAL
+  DIAGNOSTICO
+  TRATAMENTO
+  SYSTEM
+}

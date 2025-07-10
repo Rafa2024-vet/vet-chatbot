@@ -1,9 +1,11 @@
 // frontend/src/components/chat/ChatInterface.jsx
+
 import React, { useState, useEffect, useRef } from 'react';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
 import { Bot } from 'lucide-react';
-import { sendMessageToBot } from '../../services/apiService'; // Importe o serviço de API!
+import { sendMessageToBot } from '../../services/apiService';
+import { useAuth } from '../../context/AuthContext'; // 1. Importe o hook de autenticação
 
 const initialMessages = [
   { id: 1, text: 'Olá! Sou o VetChatBot, seu assistente veterinário virtual. Como posso ajudar você e seu pet hoje?', sender: 'bot', timestamp: new Date() }
@@ -13,6 +15,7 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState(initialMessages);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
+  const { user } = useAuth(); // 2. Obtenha os dados do usuário logado (que inclui o token)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -29,14 +32,22 @@ export default function ChatInterface() {
       sender: 'user',
       timestamp: new Date()
     };
-    
     setMessages(prevMessages => [...prevMessages, newUserMessage]);
     setIsLoading(true);
 
+    // --- LÓGICA ATUALIZADA ---
     try {
-      // Chama a função do nosso apiService
-      const botResponseText = await sendMessageToBot(text);
+      // 3. Obtenha o token e o petId para o teste
+      const token = user?.token;
+      const petIdParaTeste = "cmcwou5j30003pj105tdandfl"; // ID do pet "Rex" que criamos nos testes
 
+      if (!token) {
+        throw new Error("Usuário não autenticado. Faça o login novamente.");
+      }
+
+      // 4. Chame a função do apiService com todos os parâmetros necessários
+      const botResponseText = await sendMessageToBot(text, petIdParaTeste, token);
+      
       const newBotMessage = {
         id: `bot-${Date.now()}`,
         text: botResponseText,
@@ -46,10 +57,10 @@ export default function ChatInterface() {
       setMessages(prevMessages => [...prevMessages, newBotMessage]);
 
     } catch (error) {
-      // Se a API falhar, mostra uma mensagem de erro específica
+      const errorMessage = error.response?.data?.message || "Desculpe, estou com dificuldades para processar sua solicitação no momento.";
       const newBotMessage = {
         id: `bot-error-${Date.now()}`,
-        text: "Desculpe, estou com dificuldades para processar sua solicitação no momento. Verifique sua conexão ou tente novamente mais tarde.",
+        text: errorMessage,
         sender: 'bot',
         timestamp: new Date()
       };

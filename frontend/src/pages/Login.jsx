@@ -1,28 +1,44 @@
+// frontend/src/pages/Login.jsx
+
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Heart, LogIn } from 'lucide-react';
 import { createPageUrl } from '@/utils';
+import { useAuth } from '../context/AuthContext'; // 1. Importe o useAuth
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const { login } = useAuth(); // 2. Obtenha a função de login do contexto
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     setIsLoading(true);
-    // Lógica de login aqui (ex: chamada ao apiService)
-    console.log("Login attempt:", { email, password });
-    setTimeout(() => {
+
+    try {
+      const loginData = { email, password };
+      await login(loginData); // 3. Use a função de login do contexto
+      
+      navigate('/chat');
+
+    } catch (err) {
+      const errorMessage = err.response?.data?.message || "Ocorreu um erro ao tentar fazer login.";
+      setError(errorMessage);
+    } finally {
       setIsLoading(false);
-    }, 1500);
+    }
   };
 
+  // O resto do JSX continua igual...
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
-      <div className="w-full max-w-md p-8 space-y-8 bg-white shadow-2xl rounded-2xl">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white shadow-2xl rounded-2xl">
         <div className="text-center">
           <Link to={createPageUrl("Home")} className="inline-flex items-center gap-2 mb-4">
             <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-green-500 rounded-xl flex items-center justify-center">
@@ -35,41 +51,20 @@ export default function Login() {
           <h2 className="text-2xl font-bold text-gray-800">Acesse sua conta</h2>
           <p className="text-gray-600">Bem-vindo de volta! Faça login para continuar.</p>
         </div>
-        
+        {error && <p className="text-sm text-center text-red-600 bg-red-100 p-3 rounded-md">{error}</p>}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-            <Input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="seu@email.com"
-              required
-              disabled={isLoading}
-            />
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com" required disabled={isLoading}/>
           </div>
-          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Senha</label>
-            <Input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Sua senha"
-              required
-              disabled={isLoading}
-            />
+            <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Sua senha" required disabled={isLoading}/>
           </div>
-          
-          <Button 
-            type="submit" 
-            className="w-full bg-gradient-to-r from-blue-600 to-green-500 text-white"
-            disabled={isLoading}
-          >
+          <Button type="submit" className="w-full bg-gradient-to-r from-blue-600 to-green-500 text-white" disabled={isLoading}>
             {isLoading ? 'Entrando...' : <> <LogIn className="mr-2 h-4 w-4" /> Entrar </>}
           </Button>
         </form>
-
         <p className="text-center text-sm text-gray-600">
           Não tem uma conta?{' '}
           <Link to={createPageUrl("Register")} className="font-medium text-blue-600 hover:underline">
